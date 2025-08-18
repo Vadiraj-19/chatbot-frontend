@@ -75,7 +75,7 @@ function AuthPage() {
       {/* Left side info panel */}
       <div className="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
         <div className="text-center px-10">
-          <h1 className="text-4xl font-bold mb-4">Chatbot</h1>
+          <h1 className="text-4xl font-bold mb-4">Vynt</h1>
           <p className="text-lg opacity-90">
             Your AI-powered assistant.<br />
             <span className="opacity-70 text-base">Chat like you do in ChatGPT — simple, smart, and secure.</span>
@@ -87,7 +87,7 @@ function AuthPage() {
       <div className="flex w-full lg:w-1/2 items-center justify-center p-8">
         <div className="max-w-md w-full bg-neutral-900/90 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-neutral-800">
           <h2 className="text-3xl font-bold text-center mb-6 text-white">
-            {isLogin ? "Login to Chatbot" : "Sign Up for Chatbot"}
+            {isLogin ? "Login to Vynt" : "Sign Up for Vynt"}
           </h2>
 
           <form
