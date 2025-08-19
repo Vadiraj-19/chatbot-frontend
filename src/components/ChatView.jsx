@@ -18,7 +18,6 @@ export default function ChatView({ chatId }) {
 
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
-
   const [sendUserMessage] = useMutation(INSERT_USER_MESSAGE);
   const [sendToBot, { loading: botLoading }] = useMutation(SEND_MESSAGE, {
     fetchPolicy: "no-cache",
@@ -47,19 +46,14 @@ export default function ChatView({ chatId }) {
     try {
       const content = String(input);
       const chat_id = String(chatId);
-
       const resUserMsg = await sendUserMessage({
         variables: { chat_id, content },
       });
-
       const parent_message_id = resUserMsg.data.insert_messages_one.id;
-
       await sendToBot({
         variables: { chat_id, content, parent_message_id },
       });
-
       setInput("");
-
       const currentTitle = data?.messages?.[0]?.chat?.title || "New Chat";
       if (currentTitle === "New Chat" && content.trim()) {
         const newTitle = content.split(" ").slice(0, 5).join(" ");
@@ -113,9 +107,7 @@ export default function ChatView({ chatId }) {
   if (loading)
     return <p className="p-4 text-gray-400">Loading messages...</p>;
 
-  const userMessages = (data?.messages || []).filter(
-    (m) => m.role === "user"
-  );
+  const userMessages = (data?.messages || []).filter((m) => m.role === "user");
   const botMessages = (data?.messages || []).filter((m) => m.role !== "user");
 
   return (
@@ -123,9 +115,7 @@ export default function ChatView({ chatId }) {
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 custom-scrollbar pb-28">
         {userMessages.map((userMsg) => {
-          const botMsg = botMessages.find(
-            (b) => b.parent_message_id === userMsg.id
-          );
+          const botMsg = botMessages.find((b) => b.parent_message_id === userMsg.id);
           return (
             <div key={userMsg.id}>
               <MessageBubble
@@ -151,27 +141,21 @@ export default function ChatView({ chatId }) {
         )}
         <div ref={scrollRef} />
       </div>
-
       {/* Input fixed at bottom on mobile */}
-      <div
-        className="p-3 border-t border-neutral-800 flex gap-2 items-center bg-black/80
-          backdrop-blur-xl fixed bottom-0 left-0 w-full sm:static sm:w-auto"
-      >
+      <div className="p-3 border-t border-neutral-800 flex gap-2 items-center bg-black/80 backdrop-blur-xl fixed bottom-0 left-0 w-full sm:static sm:w-auto">
         <textarea
           rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
-          className="flex-1 resize-none bg-neutral-900/80 text-white border border-neutral-700 rounded-full px-4 py-2
-            focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-500/30 transition text-base"
+          className="flex-1 resize-none bg-neutral-900/80 text-white border border-neutral-700 rounded-full px-4 py-2 focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-500/30 transition text-base"
           style={{ minHeight: "44px", maxHeight: "120px" }}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || botLoading}
-          className="p-3 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 transition
-            disabled:opacity-50 disabled:cursor-not-allowed shadow-md min-w-[44px] min-h-[44px]"
+          className="p-3 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md min-w-[44px] min-h-[44px]"
           aria-label="Send message"
         >
           <Send className="w-6 h-6" />
@@ -193,13 +177,9 @@ function MessageBubble({
   handleKeyDown,
 }) {
   return (
-    <div className="mb-6">
+    <div className="mb-6 group">
       <div
-        className={`flex items-end ${
-          isUser
-            ? "flex-row-reverse"
-            : "flex-row"
-        }`}
+        className={`flex items-end ${isUser ? "flex-row-reverse" : "flex-row"}`}
       >
         {/* Avatar desktop-side (md+) */}
         <div
@@ -211,7 +191,6 @@ function MessageBubble({
         >
           {isUser ? "U" : "V"}
         </div>
-
         {/* Message bubble */}
         <div
           className={`
@@ -243,22 +222,23 @@ function MessageBubble({
       </div>
       {/* Avatar below bubble on mobile */}
       <div
-        className={`flex md:hidden mt-2 w-full ${
-          isUser ? "justify-end" : "justify-start"
-        }`}
+        className={`flex md:hidden mt-2 w-full ${isUser ? "justify-end" : "justify-start"
+          }`}
       >
         <div
-          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-lg shadow-md select-none ${
-            isUser
-              ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
-              : "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
+          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-lg shadow-md select-none ${isUser
+            ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+            : "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
           }`}
         >
           {isUser ? "U" : "V"}
         </div>
       </div>
-      {/* Controls and timestamp */}
+      {/* Time & Edit/Delete controls */}
       <div>
+        <div className={`flex mt-1 ${isUser ? "justify-end" : "justify-start"}`}>
+          <TimeStamp created_at={msg.created_at} />
+        </div>
         {isUser && editingMessageId !== msg.id && (
           <div className="flex gap-2 mt-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
             <button
@@ -282,13 +262,10 @@ function MessageBubble({
             </button>
           </div>
         )}
-        <TimeStamp created_at={msg.created_at} />
       </div>
     </div>
   );
 }
-
-
 
 function TimeStamp({ created_at }) {
   const date = new Date(created_at);
