@@ -10,6 +10,7 @@ import {
 } from "../gql";
 import { Send, Edit, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import Typewriter from "./typewriter";
 
 export default function ChatView({ chatId }) {
   const [input, setInput] = useState("");
@@ -38,12 +39,27 @@ export default function ChatView({ chatId }) {
 
   const scrollRef = useRef();
   const [showTyping, setShowTyping] = useState(false);
+  // Track last bot message id rendered to control typing animation timing
+  const [lastBotMessageId, setLastBotMessageId] = useState(null);
+
+  const userMessages = (data?.messages || []).filter((m) => m.role === "user");
+  const botMessages = (data?.messages || []).filter((m) => m.role !== "user");
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [data, botLoading]);
 
-  // Vynt typing effect (hides with a delay after botLoading stops)
+  // Update lastBotMessageId only when a new bot message arrives
+  useEffect(() => {
+    if (botMessages.length > 0) {
+      const newestBotId = botMessages[botMessages.length - 1].id;
+      if (newestBotId !== lastBotMessageId) {
+        setLastBotMessageId(newestBotId);
+      }
+    }
+  }, [botMessages, lastBotMessageId]);
+
+  // Show "Vynt is typing..." indicator while bot is loading
   useEffect(() => {
     if (botLoading) {
       setShowTyping(true);
@@ -119,9 +135,6 @@ export default function ChatView({ chatId }) {
   if (loading)
     return <p className="p-4 text-gray-400">Loading messages...</p>;
 
-  const userMessages = (data?.messages || []).filter((m) => m.role === "user");
-  const botMessages = (data?.messages || []).filter((m) => m.role !== "user");
-
   return (
     <div className="flex flex-col h-screen min-h-0 bg-gradient-to-b from-neutral-950 to-black">
       {/* Messages container */}
@@ -141,7 +154,13 @@ export default function ChatView({ chatId }) {
                 handleDeleteMessage={handleDeleteMessage}
                 handleKeyDown={handleKeyDown}
               />
-              {botMsg && <MessageBubble msg={botMsg} isUser={false} />}
+              {botMsg && (
+                <MessageBubble
+                  msg={botMsg}
+                  isUser={false}
+                  isTyping={botMsg.id === lastBotMessageId}
+                />
+              )}
             </div>
           );
         })}
@@ -177,11 +196,10 @@ export default function ChatView({ chatId }) {
   );
 }
 
-
-
 function MessageBubble({
   msg,
   isUser,
+  isTyping = false,
   editingMessageId,
   editingContent,
   setEditingMessageId,
@@ -217,7 +235,7 @@ function MessageBubble({
             }
           `}
         >
-          {editingMessageId === msg.id ? (
+          {editingMessageId === msg.id && isUser ? (
             <input
               type="text"
               value={editingContent}
@@ -227,8 +245,10 @@ function MessageBubble({
               onKeyDown={handleKeyDown}
               onBlur={() => editingMessageId && handleUpdateMessage(msg.id)}
             />
+          ) : !isUser && isTyping ? (
+            <Typewriter key={msg.id} text={msg.content || ""} />
           ) : (
-            <div className="prose prose-invert max-w-none">
+            <div className="prose prose-invert max-w-none whitespace-pre-wrap">
               <ReactMarkdown>{(msg.content || "").replace(/\\n/g, "\n")}</ReactMarkdown>
             </div>
           )}
@@ -243,7 +263,7 @@ function MessageBubble({
           className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-lg shadow-md select-none ${isUser
             ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
             : "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
-          }`}
+            }`}
         >
           {isUser ? "U" : "V"}
         </div>
@@ -280,7 +300,6 @@ function MessageBubble({
     </div>
   );
 }
-
 
 function TimeStamp({ created_at }) {
   const date = new Date(created_at);
