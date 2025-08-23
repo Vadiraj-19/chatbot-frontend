@@ -10,7 +10,7 @@ import {
 } from "../gql";
 import { Send, Edit, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import Typewriter from "./typewriter";
+import Typewriter from "./Typewriter";
 
 export default function ChatView({ chatId }) {
   const [input, setInput] = useState("");
