@@ -9,6 +9,7 @@ import {
   DELETE_USER_AND_BOT_MESSAGES,
 } from "../gql";
 import { Send, Edit, Trash2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export default function ChatView({ chatId }) {
   const [input, setInput] = useState("");
@@ -36,10 +37,21 @@ export default function ChatView({ chatId }) {
   });
 
   const scrollRef = useRef();
+  const [showTyping, setShowTyping] = useState(false);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [data, botLoading]);
+
+  // Vynt typing effect (hides with a delay after botLoading stops)
+  useEffect(() => {
+    if (botLoading) {
+      setShowTyping(true);
+    } else if (showTyping) {
+      const timeout = setTimeout(() => setShowTyping(false), 700);
+      return () => clearTimeout(timeout);
+    }
+  }, [botLoading, showTyping]);
 
   const handleSend = async () => {
     if (!input.trim() || !chatId) return;
@@ -87,7 +99,7 @@ export default function ChatView({ chatId }) {
   };
 
   const handleDeleteMessage = async (id) => {
-    if (confirm("Are you sure you want to delete this message and its responses?")) {
+    if (window.confirm("Are you sure you want to delete this message and its responses?")) {
       await deleteMessages({ variables: { message_id: id } });
     }
   };
@@ -134,7 +146,7 @@ export default function ChatView({ chatId }) {
           );
         })}
         {/* Typing indicator */}
-        {botLoading && (
+        {showTyping && (
           <div className="px-6 py-3 text-center text-gray-400 italic select-none animate-pulse text-base">
             Vynt is typing...
           </div>
@@ -165,6 +177,8 @@ export default function ChatView({ chatId }) {
   );
 }
 
+
+
 function MessageBubble({
   msg,
   isUser,
@@ -178,9 +192,7 @@ function MessageBubble({
 }) {
   return (
     <div className="mb-6 group">
-      <div
-        className={`flex items-end ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <div className={`flex items-end ${isUser ? "flex-row-reverse" : "flex-row"}`}>
         {/* Avatar desktop-side (md+) */}
         <div
           className={`hidden md:flex w-10 h-10 rounded-full items-center justify-center font-bold text-xl shadow-md select-none
@@ -216,7 +228,9 @@ function MessageBubble({
               onBlur={() => editingMessageId && handleUpdateMessage(msg.id)}
             />
           ) : (
-            <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown>{(msg.content || "").replace(/\\n/g, "\n")}</ReactMarkdown>
+            </div>
           )}
         </div>
       </div>
@@ -266,6 +280,7 @@ function MessageBubble({
     </div>
   );
 }
+
 
 function TimeStamp({ created_at }) {
   const date = new Date(created_at);
